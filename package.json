@@ -1,6 +1,6 @@
 {
   "name": "ipa-extract-info",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Extract the Info.Plist from an IPA",
   "repository": "juliangruber/ipa-extract-info",
   "license": "MIT",
