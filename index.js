@@ -15,7 +15,13 @@ module.exports = function(fd, cb){
         collect(file, function(err, src){
           if (err) return cb(err);
 
-          cb(null, parse(src), src);
+          try {
+            var obj = parse(src);
+          } catch (err) {
+            return cb(err);
+          }
+
+          cb(null, obj, src);
         });
       });
     });
