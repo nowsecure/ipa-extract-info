@@ -7,9 +7,6 @@
   "dependencies": {
     "bplist-parser": "^0.1.0",
     "collect-stream": "^1.1.1",
-    "minimist": "^1.2.0",
-    "plist": "^1.1.0",
-    "simple-plist": "0.0.4",
     "yauzl": "^2.3.1"
   }
 }

@@ -1,6 +1,5 @@
 var fromFd = require('yauzl').fromFd;
 var collect = require('collect-stream');
-var plist = require('plist');
 var parse = require('bplist-parser').parseBuffer;
 
 module.exports = function(fd, cb){
