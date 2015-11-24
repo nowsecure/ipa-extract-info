@@ -1,6 +1,10 @@
 var fromFd = require('yauzl').fromFd;
 var collect = require('collect-stream');
-var parse = require('bplist-parser').parseBuffer;
+var bplistParse = require('bplist-parser').parseBuffer;
+var plistParse = require('plist').parse;
+
+var chrOpenChevron = 60;
+var chrLowercaseB = 98;
 
 module.exports = function(fd, cb){
   fromFd(fd, function(err, zip){
@@ -15,13 +19,20 @@ module.exports = function(fd, cb){
         collect(file, function(err, src){
           if (err) return cb(err);
 
+          var obj;
           try {
-            var obj = parse(src);
+            if (src[0] === chrOpenChevron) {
+              obj = plistParse(src.toString());
+            } else if (src[0] === chrLowercaseB) {
+              obj = bplistParse(src);
+            } else {
+              return cb(new Error('unknown plist type %s', src[0]));
+            }
           } catch (err) {
             return cb(err);
           }
 
-          cb(null, obj, src);
+          cb(null, [].concat(obj), src);
         });
       });
     });
