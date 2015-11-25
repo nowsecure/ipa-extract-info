@@ -1,6 +1,10 @@
 var zip = require('zipjs-browserify');
 var typedToBuffer = require('typedarray-to-buffer');
-var parse = require('bplist-parser').parseBuffer;
+var bplistParse = require('bplist-parser').parseBuffer;
+var plistParse = require('plist').parse;
+
+var chrOpenChevron = 60;
+var chrLowercaseB = 98;
 
 module.exports = function(blob, cb){
   var onerror = function(err){ cb(err) };
@@ -17,7 +21,17 @@ module.exports = function(blob, cb){
           if (err) return cb(err);
 
           var buf = typedToBuffer(typed);
-          cb(null, parse(buf), buf);
+          var obj;
+
+          if (buf[0] === chrOpenChevron) {
+            obj = plistParse(buf.toString());
+          } else if (buf[0] === chrLowercaseB) {
+            obj = bplistParse(buf);
+          } else {
+            return cb(new Error('unknown plist type %s', buf[0]));
+          }
+
+          cb(null, [].concat(obj), buf);
         });
       });
     });
