@@ -1,6 +1,6 @@
 {
   "name": "ipa-extract-info",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Extract the Info.Plist from an IPA",
   "repository": "nowsecure/ipa-extract-info",
   "license": "MIT",
