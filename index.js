@@ -2,6 +2,7 @@ var fromFd = require('yauzl').fromFd;
 var collect = require('collect-stream');
 var bplistParse = require('bplist-parser').parseBuffer;
 var plistParse = require('plist').parse;
+var reg = require('./lib/reg');
 
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
@@ -9,10 +10,12 @@ var chrLowercaseB = 98;
 module.exports = function(fd, cb){
   fromFd(fd, function(err, zip){
     if (err) return cb(err);
+    var onentry;
 
-    zip.on('entry', function(entry){
-      if (!/^Payload\/[^\/]+\/Info.plist$/.test(entry.fileName)) return;
+    zip.on('entry', onentry = function(entry){
+      if (!reg.test(entry.fileName)) return;
 
+      zip.removeListener('entry', onentry);
       zip.openReadStream(entry, function(err, file){
         if (err) return cb(err);
 
