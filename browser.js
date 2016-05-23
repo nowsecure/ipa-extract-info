@@ -2,6 +2,7 @@ var zip = require('zipjs-browserify');
 var typedToBuffer = require('typedarray-to-buffer');
 var bplistParse = require('bplist-parser').parseBuffer;
 var plistParse = require('plist').parse;
+var reg = require('./lib/reg');
 
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
@@ -41,7 +42,7 @@ module.exports = function(blob, cb){
 function findEntry(entries){
   for (var i = 0; i < entries.length; i++) {
     var entry = entries[i];
-    if (/^Payload\/[^\/]+\/Info.plist$/.test(entry.filename)) return entry;
+    if (reg.plist$/.test(entry.filename)) return entry;
   }
 }
 
