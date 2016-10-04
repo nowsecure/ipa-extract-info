@@ -1,3 +1,4 @@
 node_modules
 *.ipa
 Info.plist
+/scratch
