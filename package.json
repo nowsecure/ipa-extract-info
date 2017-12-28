@@ -1,13 +1,12 @@
 {
   "name": "ipa-extract-info",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Extract the Info.Plist from an IPA",
   "repository": "nowsecure/ipa-extract-info",
   "license": "MIT",
   "dependencies": {
     "bplist-parser": "^0.1.0",
     "collect-stream": "^1.1.1",
-    "once": "^1.4.0",
     "plist": "^1.2.0",
     "typedarray-to-buffer": "^3.0.4",
     "yauzl": "^2.3.1",
