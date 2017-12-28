@@ -42,7 +42,7 @@ module.exports = function(blob, cb){
 function findEntry(entries){
   for (var i = 0; i < entries.length; i++) {
     var entry = entries[i];
-    if (reg.plist$/.test(entry.filename)) return entry;
+    if (reg.plist.test(entry.filename)) return entry;
   }
 }
 
