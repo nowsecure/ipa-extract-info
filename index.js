@@ -9,7 +9,7 @@ var chrLowercaseB = 98;
 
 module.exports = function(fd, cb){
   var isPlistExist = false;
-  cb = once(cb || function(){});
+  cb = cb || function(){};
   fromFd(fd, function(err, zip){
     if (err) return cb(err);
     var onentry;
