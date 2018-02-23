@@ -9,13 +9,19 @@ var chrOpenChevron = 60;
 var chrLowercaseB = 98;
 
 module.exports = function(fd, cb){
+  var foundPlist = false;
   cb = once(cb || function(){});
+
   fromFd(fd, function(err, zip){
     if (err) return cb(err);
     var onentry;
 
     zip.on('entry', onentry = function(entry){
-      if (!reg.test(entry.fileName)) return;
+      if (!reg.test(entry.fileName)) {
+        return
+      } else {
+        foundPlist = true
+      }
 
       zip.removeListener('entry', onentry);
       zip.openReadStream(entry, function(err, file){
@@ -43,7 +49,7 @@ module.exports = function(fd, cb){
     });
 
     zip.on('end', function() {
-      if (!cb.called) { return cb(new Error('No Info.plist found')); }
+      if (!foundPlist) { return cb(new Error('No Info.plist found')); }
     });
   });
 }
