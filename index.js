@@ -3,13 +3,15 @@ var collect = require('collect-stream');
 var bplistParse = require('bplist-parser').parseBuffer;
 var plistParse = require('plist').parse;
 var reg = require('./lib/reg');
+var once = require('once');
 
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
 
 module.exports = function(fd, cb){
-  var isPlistExist = false;
-  cb = cb || function(){};
+  var foundPlist = false;
+  cb = once(cb || function(){});
+
   fromFd(fd, function(err, zip){
     if (err) return cb(err);
     var onentry;
@@ -18,7 +20,7 @@ module.exports = function(fd, cb){
       if (!reg.test(entry.fileName)) {
         return
       } else {
-        isPlistExist = true
+        foundPlist = true
       }
 
       zip.removeListener('entry', onentry);
@@ -47,7 +49,7 @@ module.exports = function(fd, cb){
     });
 
     zip.on('end', function() {
-      if (!isPlistExist) { return cb(new Error('No Info.plist found')); }
+      if (!foundPlist) { return cb(new Error('No Info.plist found')); }
     });
   });
 }
