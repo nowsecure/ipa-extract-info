@@ -2,3 +2,4 @@ node_modules
 *.ipa
 Info.plist
 /scratch
+.envrc

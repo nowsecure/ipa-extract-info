@@ -48,8 +48,12 @@ module.exports = function(fd, cb){
       });
     });
 
-    zip.on('end', function() {
+    zip
+    .on('end', function() {
       if (!foundPlist) { return cb(new Error('No Info.plist found')); }
+    })
+    .on('error', function(err) {
+      return cb(err);
     });
   });
 }

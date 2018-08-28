@@ -4,20 +4,20 @@
   "description": "Extract the Info.Plist from an IPA",
   "repository": "nowsecure/ipa-extract-info",
   "license": "MIT",
+  "files": [
+    "lib/"
+  ],
+  "main": "index.js",
   "dependencies": {
     "bplist-parser": "^0.1.0",
     "collect-stream": "^1.1.1",
     "once": "^1.4.0",
     "plist": "^1.2.0",
     "typedarray-to-buffer": "^3.0.4",
-    "yauzl": "^2.3.1",
+    "yauzl": "^2.10.0",
     "zipjs-browserify": "^1.0.0"
   },
-  "devDependencies": {
-    "beefy": "^2.1.5"
-  },
-  "scripts": {
-    "example-browser": "beefy example/browser.js"
-  },
+  "devDependencies": {},
+  "scripts": {},
   "browser": "browser.js"
 }
