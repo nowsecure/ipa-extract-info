@@ -8,30 +8,60 @@ var once = require('once');
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
 
-module.exports = function(fd, cb){
-  var foundPlist = false;
-  cb = once(cb || function(){});
+const emp = /^Payload\/[^\/]+\.app\/embedded.mobileprovision$/;
 
-  fromFd(fd, function(err, zip){
+function isEnterprise(entry, zip, cb) {
+  if (!emp.test(entry.fileName)) {
+    return false;
+  }
+  zip.openReadStream(entry, function (err, file) {
+    if (err) return cb(err);
+
+    collect(file, function (err, src) {
+      if (err) return cb(err);
+
+      try {
+        cb(null, src.toString().indexOf('<key>ProvisionsAllDevices</key>') !== -1);
+      } catch (err) {
+        return cb(err);
+      }
+    });
+  });
+  return true;
+}
+
+module.exports = function (fd, cb) {
+  let foundPlist = false;
+  let isEnterpriseApp = false;
+  cb = once(cb || function () {});
+  var obj = null;
+  var objSrc = null;
+
+  fromFd(fd, function (err, zip) {
     if (err) return cb(err);
     var onentry;
 
-    zip.on('entry', onentry = function(entry){
-      if (!reg.test(entry.fileName)) {
-        return
-      } else {
-        foundPlist = true
-      }
+    zip.on('entry', onentry = function (entry) {
+      if (isEnterprise(entry, zip, (err, iea) => {
+        isEnterpriseApp = true;
+        return;
+      })) {
+        return;
+      };
+      if (foundPlist || !reg.test(entry.fileName)) {
+          return;
+        }
+      foundPlist = true;
 
       zip.removeListener('entry', onentry);
-      zip.openReadStream(entry, function(err, file){
+      zip.openReadStream(entry, function (err, file) {
         if (err) return cb(err);
 
-        collect(file, function(err, src){
+        collect(file, function (err, src) {
           if (err) return cb(err);
 
-          var obj;
           try {
+            objSrc = src;
             if (src[0] === chrOpenChevron) {
               obj = plistParse(src.toString());
             } else if (src[0] === chrLowercaseB) {
@@ -42,18 +72,18 @@ module.exports = function(fd, cb){
           } catch (err) {
             return cb(err);
           }
-
-          cb(null, [].concat(obj), src);
         });
       });
     });
 
     zip
-    .on('end', function() {
-      if (!foundPlist) { return cb(new Error('No Info.plist found')); }
-    })
-    .on('error', function(err) {
-      return cb(err);
-    });
+      .on('end', function () {
+        if (!foundPlist) { return cb(new Error('No Info.plist found')); }
+        obj.isEnterprise = isEnterpriseApp;
+        return cb(null, [].concat(obj), objSrc);
+      })
+      .on('error', function (err) {
+        return cb(err);
+      });
   });
-}
+};
