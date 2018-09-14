@@ -8,10 +8,8 @@ var once = require('once');
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
 
-const emp = /^Payload\/[^\/]+\.app\/embedded.mobileprovision$/;
-
 function isEnterprise(entry, zip, cb) {
-  if (!emp.test(entry.fileName)) {
+  if (!reg.mobileProvision.test(entry.fileName)) {
     return false;
   }
   zip.openReadStream(entry, function (err, file) {
@@ -21,7 +19,8 @@ function isEnterprise(entry, zip, cb) {
       if (err) return cb(err);
 
       try {
-        cb(null, src.toString().indexOf('<key>ProvisionsAllDevices</key>') !== -1);
+        const q = src.toString().indexOf('<key>ProvisionsAllDevices</key>') !== -1;
+        cb(null, q);
       } catch (err) {
         return cb(err);
       }
@@ -34,7 +33,7 @@ module.exports = function (fd, cb) {
   let foundPlist = false;
   let isEnterpriseApp = false;
   cb = once(cb || function () {});
-  var obj = null;
+  var obj = {};
   var objSrc = null;
 
   fromFd(fd, function (err, zip) {
@@ -43,12 +42,12 @@ module.exports = function (fd, cb) {
 
     zip.on('entry', onentry = function (entry) {
       if (isEnterprise(entry, zip, (err, iea) => {
-        isEnterpriseApp = true;
-        return;
+        if (err) throw err;
+        isEnterpriseApp = iea;
       })) {
         return;
       };
-      if (foundPlist || !reg.test(entry.fileName)) {
+      if (foundPlist || !reg.infoPlist.test(entry.fileName)) {
           return;
         }
       foundPlist = true;
