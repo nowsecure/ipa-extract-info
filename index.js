@@ -3,13 +3,10 @@ const fromFd = promisify(require('yauzl').fromFd);
 const collect = promisify(require('collect-stream'));
 const bplistParse = require('bplist-parser').parseBuffer;
 const plistParse = require('plist').parse;
+const reg = require('./lib/reg')
 
 const chrOpenChevron = 60;
 const chrLowercaseB = 98;
-const reg = {
-  info: /^Payload\/[^\/]+\.app\/Info.plist$/,
-  mobileprovision: /^Payload\/[^\/]+\.app\/embedded.mobileprovision$/
-}
 
 module.exports = async function (fd) {
   const zip = await fromFd(fd);
