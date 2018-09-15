@@ -1,59 +1,64 @@
-var fromFd = require('yauzl').fromFd;
-var collect = require('collect-stream');
-var bplistParse = require('bplist-parser').parseBuffer;
-var plistParse = require('plist').parse;
-var reg = require('./lib/reg');
-var once = require('once');
+const promisify = require('util').promisify;
+const fromFd = promisify(require('yauzl').fromFd);
+const collect = promisify(require('collect-stream'));
+const bplistParse = require('bplist-parser').parseBuffer;
+const plistParse = require('plist').parse;
+const reg = require('./lib/reg')
 
-var chrOpenChevron = 60;
-var chrLowercaseB = 98;
+const chrOpenChevron = 60;
+const chrLowercaseB = 98;
 
-module.exports = function(fd, cb){
-  var foundPlist = false;
-  cb = once(cb || function(){});
+module.exports = async function (fd) {
+  const zip = await fromFd(fd);
+  zip.openReadStreamAsync = promisify(zip.openReadStream.bind(zip))
+  zip.on('error', (err) => {
+    throw err;
+  });
 
-  fromFd(fd, function(err, zip){
-    if (err) return cb(err);
-    var onentry;
+  const work = [];
+  work.push(handleEntry(zip, reg.info.test.bind(reg.info), function onFound (src) {
+    let plist
+    if (src[0] === chrOpenChevron) {
+      plist = plistParse(src.toString());
+    } else if (src[0] === chrLowercaseB) {
+      plist = bplistParse(src);
+    } else {
+      throw new Error(`unknown plist type byte (0x${src[0].toString(16)})`);
+    }
+    return plist
+  }));
+  work.push(handleEntry(zip, reg.mobileprovision.test.bind(reg.mobileprovision), function onFound (src) {
+    return src;
+  }));
 
-    zip.on('entry', onentry = function(entry){
-      if (!reg.test(entry.fileName)) {
-        return
-      } else {
-        foundPlist = true
-      }
+  const [info, mobileprovision] = await Promise.all(work);
+  return {
+    info,
+    mobileprovision
+  };
+}
 
-      zip.removeListener('entry', onentry);
-      zip.openReadStream(entry, function(err, file){
-        if (err) return cb(err);
-
-        collect(file, function(err, src){
-          if (err) return cb(err);
-
-          var obj;
-          try {
-            if (src[0] === chrOpenChevron) {
-              obj = plistParse(src.toString());
-            } else if (src[0] === chrLowercaseB) {
-              obj = bplistParse(src);
-            } else {
-              return cb(new Error('unknown plist type %s', src[0]));
-            }
-          } catch (err) {
-            return cb(err);
-          }
-
-          cb(null, [].concat(obj), src);
-        });
-      });
-    });
-
+function handleEntry (zip, match, onFound, removeListenerOnFound = true) {
+  return new Promise((resolve, reject) => {
+    let found = false;
+    let onentry;
     zip
-    .on('end', function() {
-      if (!foundPlist) { return cb(new Error('No Info.plist found')); }
-    })
-    .on('error', function(err) {
-      return cb(err);
-    });
+      .on('entry', onentry = async (entry) => {
+        try {
+          if (!match(entry.fileName)) { return; }
+          found = true
+          if (removeListenerOnFound) {
+            zip.removeListener('entry', onentry);
+          }
+          const file = await zip.openReadStreamAsync(entry);
+          const src = await collect(file);
+          return resolve(onFound(src));
+        } catch (err) {
+          return reject(err);
+        }
+      })
+      .on('end', () => {
+        if (!found) { return resolve(null); }
+      });
   });
 }
