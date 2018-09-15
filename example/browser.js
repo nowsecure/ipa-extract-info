@@ -9,11 +9,10 @@ input.setAttribute('type', 'file');
 form.appendChild(input);
 document.body.appendChild(form);
 
-input.addEventListener('change', function(){
-  extract(input.files[0], function(err, obj, raw){
+input.addEventListener('change', function () {
+  extract(input.files[0], function (err, obj, raw) {
     if (err) throw err;
     console.log('obj', obj);
     console.log('raw', raw);
   });
 });
-

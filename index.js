@@ -8,7 +8,14 @@ var once = require('once');
 var chrOpenChevron = 60;
 var chrLowercaseB = 98;
 
-function isEnterprise(entry, zip, cb) {
+const provisioningWatermarks = {
+  'enterprise': ['<key>ProvisionsAllDevices</key>'],
+  'adhoc': ['<string>iOS Team Ad Hoc Provisioning Profile: *</string>'],
+  'developer': ['<string>iOS Team Provisioning Profile: *</string>'],
+  'appstore': ['<string>iOS Team Store Provisioning Profile: *</string>', '<key>beta-reports-active</key>']
+};
+
+function identifyProvisioningType (entry, zip, cb) {
   if (!reg.mobileProvision.test(entry.fileName)) {
     return false;
   }
@@ -19,8 +26,15 @@ function isEnterprise(entry, zip, cb) {
       if (err) return cb(err);
 
       try {
-        const q = src.toString().indexOf('<key>ProvisionsAllDevices</key>') !== -1;
-        cb(null, q);
+        const provisionString = src.toString();
+        for (let type of Object.keys(provisioningWatermarks)) {
+          for (let watermark of provisioningWatermarks[type]) {
+            if (provisionString.indexOf(watermark) !== -1) {
+              return cb(null, type);
+            }
+          }
+        }
+        return cb(null, null);
       } catch (err) {
         return cb(err);
       }
@@ -31,7 +45,7 @@ function isEnterprise(entry, zip, cb) {
 
 module.exports = function (fd, cb) {
   let foundPlist = false;
-  let isEnterpriseApp = false;
+  let provisioningType = null;
   cb = once(cb || function () {});
   var obj = {};
   var objSrc = null;
@@ -41,15 +55,15 @@ module.exports = function (fd, cb) {
     var onentry;
 
     zip.on('entry', onentry = function (entry) {
-      if (isEnterprise(entry, zip, (err, iea) => {
+      if (identifyProvisioningType(entry, zip, (err, type) => {
         if (err) throw err;
-        isEnterpriseApp = iea;
+        provisioningType = type;
       })) {
         return;
-      };
+      }
       if (foundPlist || !reg.infoPlist.test(entry.fileName)) {
-          return;
-        }
+        return;
+      }
       foundPlist = true;
 
       zip.removeListener('entry', onentry);
@@ -77,8 +91,12 @@ module.exports = function (fd, cb) {
 
     zip
       .on('end', function () {
-        if (!foundPlist) { return cb(new Error('No Info.plist found')); }
-        obj.isEnterprise = isEnterpriseApp;
+        if (!foundPlist) {
+          return cb(new Error('No Info.plist found'));
+        }
+        if (provisioningType) {
+          obj.provisioningType = provisioningType;
+        }
         return cb(null, [].concat(obj), objSrc);
       })
       .on('error', function (err) {
