@@ -17,28 +17,27 @@ module.exports = async function (fd, { autoClose = true } = {}) {
 
   const findInfo = async () => {
     const { entry } = await findEntry(zip, reg.info.test.bind(reg.info));
-    let plist = null;
-    if (entry) {
-      const file = await zip.openReadStreamAsync(entry);
-      const src = await collect(file);
-      if (src[0] === chrOpenChevron) {
-        plist = plistParse(src.toString());
-      } else if (src[0] === chrLowercaseB) {
-        plist = bplistParse(src);
-      } else {
-        throw new Error(`unknown plist type byte (0x${src[0].toString(16)})`);
-      }
+    if (!entry) {
+      return null;
     }
-    return plist;
-  };
+    const file = await zip.openReadStreamAsync(entry);
+    const src = await collect(file);
+    if (src[0] === chrOpenChevron) {
+      return plistParse(src.toString());
+    } else if (src[0] === chrLowercaseB) {
+      return bplistParse(src);
+    } else {
+      throw new Error(`unknown plist type byte (0x${src[0].toString(16)})`);
+    }
+  }
 
   const findProv = async () => {
     const { entry } = await findEntry(zip, reg.mobileprovision.test.bind(reg.mobileprovision));
-    if (entry) {
-      const file = await zip.openReadStreamAsync(entry);
-      return collect(file);
+    if (!entry) {
+      return null;
     }
-    return null;
+    const file = await zip.openReadStreamAsync(entry);
+    return collect(file);
   };
 
   const [info, mobileprovision] = await Promise.all([findInfo(), findProv()]);
