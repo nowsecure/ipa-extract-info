@@ -16,23 +16,29 @@ module.exports = async function (fd, { autoClose = true } = {}) {
   });
 
   const findInfo = async () => {
-    const { entry } = await findEntry(zip, reg.info.test.bind(reg.info));
+    const matchInfo = f => reg.info.test(f);
+    const { entry } = await findEntry(zip, matchInfo);
     if (!entry) {
       return null;
     }
     const file = await zip.openReadStreamAsync(entry);
     const src = await collect(file);
+
+    let parsed;
     if (src[0] === chrOpenChevron) {
-      return plistParse(src.toString());
+      parsed = plistParse(src.toString());
     } else if (src[0] === chrLowercaseB) {
-      return bplistParse(src);
+      parsed = bplistParse(src);
     } else {
       throw new Error(`unknown plist type byte (0x${src[0].toString(16)})`);
     }
+
+    return parsed;
   }
 
   const findProv = async () => {
-    const { entry } = await findEntry(zip, reg.mobileprovision.test.bind(reg.mobileprovision));
+    const matchProv = f => reg.mobileprovision.test(f);
+    const { entry } = await findEntry(zip, matchProv);
     if (!entry) {
       return null;
     }
