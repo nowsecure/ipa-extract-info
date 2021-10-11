@@ -12,7 +12,7 @@
     "bplist-parser": "^0.1.0",
     "collect-stream": "^1.1.1",
     "once": "^1.4.0",
-    "plist": "^3.0.1",
+    "plist": "^3.0.4",
     "typedarray-to-buffer": "^3.1.5",
     "yauzl": "^2.10.0",
     "zipjs-browserify": "^1.0.0"
